@@ -17,8 +17,8 @@ impl Cli {
         // Here you would implement the logic to handle the command type and path
         // For example, you could read a file at the given path or perform some action based on cmd_type
         println!("Running command: {} on path: {:?}", self.cmd_type, self.path);
-        let mut f = File::open(self.path).ok().unwrap();
-        
+        let mut f = File::open(self.path.clone()).ok().unwrap();
+
         let mut bytes : [u8; 10] = [0; 10];
         let mut line_count = 0;
         let read_result=  f.read(&mut bytes[..]);
@@ -32,7 +32,7 @@ impl Cli {
             },
             Err(_) => todo!(),
         }
-        println!("{}",line_count)
+        println!("{} {}", line_count, self.path.display());
     }
 }
 
