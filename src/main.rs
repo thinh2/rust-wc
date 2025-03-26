@@ -1,6 +1,7 @@
-use std::io::Read;
+use std::io::{Error, Read};
 use std::path::PathBuf;
 use std::fs::File;
+use std::string;
 
 struct Cli {
     cmd_type: String,
@@ -19,18 +20,25 @@ impl Cli {
         println!("Running command: {} on path: {:?}", self.cmd_type, self.path);
         let mut f = File::open(self.path.clone()).ok().unwrap();
 
-        let mut bytes : [u8; 10] = [0; 10];
+        let mut bytes : [u8; 1000] = [0; 1000];
         let mut line_count = 0;
-        let read_result=  f.read(&mut bytes[..]);
-        match read_result {
-            Ok(n) => {
-                for idx in 0..n {
-                    if bytes[idx] == 10 {
-                        line_count += 1;
+        loop {
+            let read_result=  f.read(&mut bytes[..]);
+            match read_result {
+                Ok(n) => {
+                    if n == 0 {
+                        break;
                     }
-                }
-            },
-            Err(_) => todo!(),
+                    for idx in 0..n {
+                        if bytes[idx] == 10 {
+                            line_count += 1;
+                        }
+                    }
+                },
+                Err(e) => {
+                    panic!("error happened {}", e)
+                },
+            }
         }
         println!("{} {}", line_count, self.path.display());
     }
@@ -42,4 +50,27 @@ fn main() {
 
     let cli = Cli::new(cmd_type.clone(), path.clone());
     cli.run();
+}
+
+#[cfg(test)]
+mod tests {
+   #[test]
+   fn test_one_line() {
+
+   }
+
+   #[test]
+   fn test_empty_file() {
+
+   }
+
+   #[test]
+   fn test_multiple_line() {
+
+   }
+
+   #[test]
+   fn test_multiple_file() {
+
+   }
 }
