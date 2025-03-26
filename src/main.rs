@@ -1,7 +1,6 @@
 use std::io::{Error, Read};
 use std::path::PathBuf;
 use std::fs::File;
-use std::string;
 
 struct Cli {
     cmd_type: String,
@@ -54,23 +53,38 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-   #[test]
-   fn test_one_line() {
+    use assert_cmd::Command;
+    use predicates::str::contains;
 
-   }
+    #[test]
+    fn test_one_line() {
+        let mut cmd = Command::cargo_bin("wc").unwrap();
+        cmd.arg("-l").arg("resource/test_one_line")
+            .assert()
+            .success()
+            .stdout(contains("1 resource/test_one_line"));
+    }
 
-   #[test]
-   fn test_empty_file() {
+    #[test]
+    fn test_empty_file() {
+        let mut cmd = Command::cargo_bin("wc").unwrap();
+        cmd.arg("-l").arg("resource/test_empty")
+            .assert()
+            .success()
+            .stdout(contains("0 resource/test_empty"));
+    }
 
-   }
+    #[test]
+    fn test_multiple_line() {
+        let mut cmd = Command::cargo_bin("wc").unwrap();
+        cmd.arg("-l").arg("resource/test.in")
+            .assert()
+            .success()
+            .stdout(contains("10 resource/test.in"));
+    }
 
-   #[test]
-   fn test_multiple_line() {
+    #[test]
+    fn test_multiple_file() {
 
-   }
-
-   #[test]
-   fn test_multiple_file() {
-
-   }
+    }
 }
