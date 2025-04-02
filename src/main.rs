@@ -1,23 +1,34 @@
-use std::io::{Error, Read};
+use std::io::Read;
 use std::path::PathBuf;
 use std::fs::File;
 
+use clap::{arg, Parser};
+
+#[derive(Parser)]
 struct Cli {
-    cmd_type: String,
-    path: std::path::PathBuf,
+    #[arg(short = 'l')]
+    line_count: bool,
+
+    #[arg(short = 'b')]
+    bytes_count: bool,
+
+    //#[arg(trailing_var_args = true)]
+    paths: Vec<PathBuf>,
 }
 
 impl Cli {
-    fn new(cmd_type: String, path: String) -> Self {
-        Self { cmd_type,  path: PathBuf::from(path) }
-    }
-
     // First milestone: count the number of line one file has
-    fn run(self) {
-        // Here you would implement the logic to handle the command type and path
-        // For example, you could read a file at the given path or perform some action based on cmd_type
-        println!("Running command: {} on path: {:?}", self.cmd_type, self.path);
-        let mut f = File::open(self.path.clone()).ok().unwrap();
+    fn run_single_file(&self, path: PathBuf) {
+        println!("processing {}", path.display());
+        let file_result = File::open(path.clone());
+        let mut f;
+        match file_result {
+            Ok(file) => {f = file;}
+            Err(e) => {
+                println!("{} {}", path.display(), e);
+                return
+            }
+        }
 
         let mut bytes : [u8; 1000] = [0; 1000];
         let mut line_count = 0;
@@ -29,7 +40,7 @@ impl Cli {
                         break;
                     }
                     for idx in 0..n {
-                        if bytes[idx] == 10 {
+                        if self.line_count == true && bytes[idx] == 10 {
                             line_count += 1;
                         }
                     }
@@ -39,15 +50,19 @@ impl Cli {
                 },
             }
         }
-        println!("{} {}", line_count, self.path.display());
+        //println!("path is {}", path.display());
+        println!("{} {}", line_count, path.display());
+    }
+
+    fn run(&self) {
+        for path in self.paths.clone() {
+            self.run_single_file(path);
+        }
     }
 }
 
 fn main() {
-    let cmd_type = std::env::args().nth(1).unwrap();
-    let path = std::env::args().nth(2).unwrap();
-
-    let cli = Cli::new(cmd_type.clone(), path.clone());
+    let cli = Cli::parse();
     cli.run();
 }
 
@@ -85,6 +100,12 @@ mod tests {
 
     #[test]
     fn test_multiple_file() {
-
+        let mut cmd = Command::cargo_bin("wc").unwrap();
+        cmd.arg("-l").arg("resource/test.in").arg("resource/test_one_line").arg("resource/test_empty")
+            .assert()
+            .success()
+            .stdout(contains("10 resource/test.in"))
+            .stdout(contains("0 resource/test_empty"))
+            .stdout(contains("1 resource/test_one_line"));
     }
 }
