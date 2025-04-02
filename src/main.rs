@@ -1,6 +1,8 @@
 use std::io::Read;
 use std::path::PathBuf;
 use std::fs::File;
+use log::debug;
+use glob::glob;
 
 use clap::{arg, Parser};
 
@@ -19,7 +21,7 @@ struct Cli {
 impl Cli {
     // First milestone: count the number of line one file has
     fn run_single_file(&self, path: PathBuf) {
-        println!("processing {}", path.display());
+        debug!("processing {}", path.display());
         let file_result = File::open(path.clone());
         let mut f;
         match file_result {
@@ -32,6 +34,7 @@ impl Cli {
 
         let mut bytes : [u8; 1000] = [0; 1000];
         let mut line_count = 0;
+        let mut byte_count = 0;
         loop {
             let read_result=  f.read(&mut bytes[..]);
             match read_result {
@@ -43,6 +46,9 @@ impl Cli {
                         if self.line_count == true && bytes[idx] == 10 {
                             line_count += 1;
                         }
+                        if self.bytes_count == true {
+                            byte_count += 1;
+                        }
                     }
                 },
                 Err(e) => {
@@ -51,12 +57,23 @@ impl Cli {
             }
         }
         //println!("path is {}", path.display());
-        println!("{} {}", line_count, path.display());
+        if self.line_count {
+            print!("{}", line_count)
+        }
+        if self.bytes_count {
+            print!("\t{}", byte_count)
+        }
+        println!("\t{}", path.display());
     }
 
     fn run(&self) {
-        for path in self.paths.clone() {
-            self.run_single_file(path);
+        for glob_path in self.paths.clone() {
+            for entry in glob(glob_path.to_str().unwrap()).unwrap() {
+                match entry {
+                    Ok(path)=> self.run_single_file(path),
+                    Err(err) => println!("{}", err),
+                }
+            }
         }
     }
 }
